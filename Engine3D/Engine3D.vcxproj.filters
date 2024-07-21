@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Engine3D.cpp">
+    <ClCompile Include="Source\Engine3D.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
