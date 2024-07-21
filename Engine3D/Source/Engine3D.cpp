@@ -120,7 +120,7 @@ public:
             triProjected.p[1].y *= 0.5f * (float)ScreenHeight();
             triProjected.p[2].x *= 0.5f * (float)ScreenWidth();
             triProjected.p[2].y *= 0.5f * (float)ScreenHeight();
-
+             
             DrawTriangle(triProjected.p[0].x, triProjected.p[0].y, triProjected.p[1].x,
                 triProjected.p[1].y, triProjected.p[2].x, triProjected.p[2].y);
         }
