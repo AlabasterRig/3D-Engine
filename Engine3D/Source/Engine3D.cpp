@@ -1,8 +1,6 @@
 ﻿#include "olcConsoleGameEngine.h"
 using namespace std;
 
-
-
 struct vec3d
 {
 	float x, y, z;
@@ -61,35 +59,35 @@ public:
 		meshCube.tris = {
 
 			// SOUTH
-			{ 0.0f, 0.0f, 0.0f,    0.0f, 2.0f, 0.0f,    2.0f, 2.0f, 0.0f },
-			{ 0.0f, 0.0f, 0.0f,    1.0f, 2.0f, 0.0f,    2.0f, 0.0f, 0.0f },
+			{ 0.0f, 0.0f, 0.0f,    0.0f, 1.5f, 0.0f,    1.5f, 1.5f, 0.0f },
+			{ 0.0f, 0.0f, 0.0f,    1.5f, 1.5f, 0.0f,    1.5f, 0.0f, 0.0f },
 
 			// EAST                                                      
-			{ 2.0f, 0.0f, 0.0f,    2.0f, 2.0f, 0.0f,    2.0f, 2.0f, 2.0f },
-			{ 2.0f, 0.0f, 0.0f,    2.0f, 2.0f, 2.0f,    2.0f, 0.0f, 2.0f },
+			{ 1.5f, 0.0f, 0.0f,    1.5f, 1.5f, 0.0f,    1.5f, 1.5f, 1.5f },
+			{ 1.5f, 0.0f, 0.0f,    1.5f, 1.5f, 1.5f,    1.5f, 0.0f, 1.5f },
 
 			// NORTH                                                     
-			{ 2.0f, 0.0f, 2.0f,    2.0f, 2.0f, 2.0f,    0.0f, 2.0f, 2.0f },
-			{ 2.0f, 0.0f, 2.0f,    0.0f, 2.0f, 2.0f,    0.0f, 0.0f, 2.0f },
+			{ 1.5f, 0.0f, 1.5f,    1.5f, 1.5f, 1.5f,    0.0f, 1.5f, 1.5f },
+			{ 1.5f, 0.0f, 1.5f,    0.0f, 1.5f, 1.5f,    0.0f, 0.0f, 1.5f },
 
 			// WEST                                                      
-			{ 0.0f, 0.0f, 2.0f,    0.0f, 2.0f, 2.0f,    0.0f, 2.0f, 0.0f },
-			{ 0.0f, 0.0f, 2.0f,    0.0f, 2.0f, 0.0f,    0.0f, 0.0f, 0.0f },
+			{ 0.0f, 0.0f, 1.5f,    0.0f, 1.5f, 1.5f,    0.0f, 1.5f, 0.0f },
+			{ 0.0f, 0.0f, 1.5f,    0.0f, 1.5f, 0.0f,    0.0f, 0.0f, 0.0f },
 
 			// TOP                                                       
-			{ 0.0f, 2.0f, 0.0f,    0.0f, 2.0f, 1.0f,    2.0f, 2.0f, 2.0f },
-			{ 0.0f, 2.0f, 0.0f,    2.0f, 2.0f, 1.0f,    2.0f, 2.0f, 0.0f },
+			{ 0.0f, 1.5f, 0.0f,    0.0f, 1.5f, 1.5f,    1.5f, 1.5f, 1.5f },
+			{ 0.0f, 1.5f, 0.0f,    1.5f, 1.5f, 1.5f,    1.5f, 1.5f, 0.0f },
 
 			// BOTTOM                                                    
-			{ 2.0f, 0.0f, 2.0f,    0.0f, 0.0f, 2.0f,    0.0f, 0.0f, 0.0f },
-			{ 2.0f, 0.0f, 2.0f,    0.0f, 0.0f, 0.0f,    2.0f, 0.0f, 0.0f },
+			{ 1.5f, 0.0f, 1.5f,    0.0f, 0.0f, 1.5f,    0.0f, 0.0f, 0.0f },
+			{ 1.5f, 0.0f, 1.5f,    0.0f, 0.0f, 0.0f,    1.5f, 0.0f, 0.0f },
 
 		};
 
 		//Projection Matrix
 		float fNear = 0.1f;
 		float fFar = 2000.0f;
-		float fFov = 100.0f;
+		float fFov = 120.0f;
 		float aspectRatio = (float)ScreenHeight() / (float)ScreenWidth();
 		float fFovRad = 1.0f / tanf(fFov * 0.5f / 180.0f * 3.14159f);
 
@@ -102,6 +100,7 @@ public:
 
 		return true;
 	}
+
 
 	bool OnUserUpdate(float fElapsedTime) override
 	{
@@ -204,7 +203,6 @@ public:
 };
 
 
-
 int main()
 {
 	GameEngine3D demo;
@@ -216,4 +214,3 @@ int main()
 
 	return 0;
 }
-
