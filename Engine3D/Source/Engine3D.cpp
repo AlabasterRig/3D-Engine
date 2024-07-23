@@ -37,6 +37,7 @@ private:
 	mesh meshCube;
 	mat4x4 matProj;
 	float fTheta = 0.0f;
+	vec3d vCamera;
 
 	void MultiplyMatrixVector(vec3d& i, vec3d& o, mat4x4& m) // i = input, o = output, m = matrix
 	{
@@ -59,35 +60,35 @@ public:
 		meshCube.tris = {
 
 			// SOUTH
-			{ 0.0f, 0.0f, 0.0f,    0.0f, 1.5f, 0.0f,    1.5f, 1.5f, 0.0f },
-			{ 0.0f, 0.0f, 0.0f,    1.5f, 1.5f, 0.0f,    1.5f, 0.0f, 0.0f },
+			{ 0.0f, 0.0f, 0.0f,    0.0f, 1.0f, 0.0f,    1.0f, 1.0f, 0.0f },
+			{ 0.0f, 0.0f, 0.0f,    1.0f, 1.0f, 0.0f,    1.0f, 0.0f, 0.0f },
 
 			// EAST                                                      
-			{ 1.5f, 0.0f, 0.0f,    1.5f, 1.5f, 0.0f,    1.5f, 1.5f, 1.5f },
-			{ 1.5f, 0.0f, 0.0f,    1.5f, 1.5f, 1.5f,    1.5f, 0.0f, 1.5f },
+			{ 1.0f, 0.0f, 0.0f,    1.0f, 1.0f, 0.0f,    1.0f, 1.0f, 1.0f },
+			{ 1.0f, 0.0f, 0.0f,    1.0f, 1.0f, 1.0f,    1.0f, 0.0f, 1.0f },
 
 			// NORTH                                                     
-			{ 1.5f, 0.0f, 1.5f,    1.5f, 1.5f, 1.5f,    0.0f, 1.5f, 1.5f },
-			{ 1.5f, 0.0f, 1.5f,    0.0f, 1.5f, 1.5f,    0.0f, 0.0f, 1.5f },
+			{ 1.0f, 0.0f, 1.0f,    1.0f, 1.0f, 1.0f,    0.0f, 1.0f, 1.0f },
+			{ 1.0f, 0.0f, 1.0f,    0.0f, 1.0f, 1.0f,    0.0f, 0.0f, 1.0f },
 
 			// WEST                                                      
-			{ 0.0f, 0.0f, 1.5f,    0.0f, 1.5f, 1.5f,    0.0f, 1.5f, 0.0f },
-			{ 0.0f, 0.0f, 1.5f,    0.0f, 1.5f, 0.0f,    0.0f, 0.0f, 0.0f },
+			{ 0.0f, 0.0f, 1.0f,    0.0f, 1.0f, 1.0f,    0.0f, 1.0f, 0.0f },
+			{ 0.0f, 0.0f, 1.0f,    0.0f, 1.0f, 0.0f,    0.0f, 0.0f, 0.0f },
 
 			// TOP                                                       
-			{ 0.0f, 1.5f, 0.0f,    0.0f, 1.5f, 1.5f,    1.5f, 1.5f, 1.5f },
-			{ 0.0f, 1.5f, 0.0f,    1.5f, 1.5f, 1.5f,    1.5f, 1.5f, 0.0f },
+			{ 0.0f, 1.0f, 0.0f,    0.0f, 1.0f, 1.0f,    1.0f, 1.0f, 1.0f },
+			{ 0.0f, 1.0f, 0.0f,    1.0f, 1.0f, 1.0f,    1.0f, 1.0f, 0.0f },
 
 			// BOTTOM                                                    
-			{ 1.5f, 0.0f, 1.5f,    0.0f, 0.0f, 1.5f,    0.0f, 0.0f, 0.0f },
-			{ 1.5f, 0.0f, 1.5f,    0.0f, 0.0f, 0.0f,    1.5f, 0.0f, 0.0f },
+			{ 1.0f, 0.0f, 1.0f,    0.0f, 0.0f, 1.0f,    0.0f, 0.0f, 0.0f },
+			{ 1.0f, 0.0f, 1.0f,    0.0f, 0.0f, 0.0f,    1.0f, 0.0f, 0.0f },
 
 		};
 
 		//Projection Matrix
 		float fNear = 0.1f;
-		float fFar = 2000.0f;
-		float fFov = 120.0f;
+		float fFar = 1000.0f;
+		float fFov = 60.0f;
 		float aspectRatio = (float)ScreenHeight() / (float)ScreenWidth();
 		float fFovRad = 1.0f / tanf(fFov * 0.5f / 180.0f * 3.14159f);
 
@@ -114,7 +115,7 @@ public:
 		//Rotation Z
 		matRotZ.m[0][0] = cosf(fTheta);
 		matRotZ.m[0][1] = sinf(fTheta);
-		matRotZ.m[1][0] = -sin(fTheta);
+		matRotZ.m[1][0] = -sinf(fTheta);
 		matRotZ.m[1][1] = cos(fTheta);
 		matRotZ.m[2][2] = 1.0f;
 		matRotZ.m[3][3] = 1.0f;
@@ -151,7 +152,6 @@ public:
 
 
 			// Normal Identification
-
 			vec3d normal, line1, line2;
 
 			line1.x = triTranslated.p[1].x - triTranslated.p[0].x;
@@ -168,12 +168,15 @@ public:
 
 			//Normalising the Normal
 
-			float l = sqrtf(normal.x * normal.x + normal.y * normal.y + normal.z * normal.z);
+			float l = sqrtf((normal.x * normal.x) + (normal.y * normal.y) + (normal.z * normal.z));
 			normal.x /= l;
 			normal.y /= l;
-			normal.y /= l;
+			normal.z /= l;
 
-			if (normal.z < 0)
+
+			if (normal.x * (triTranslated.p[0].x - vCamera.x) + 
+				normal.y * (triTranslated.p[0].y - vCamera.y) +
+				normal.z * (triTranslated.p[0].z - vCamera.z) < 0.0f)
 			{
 				// Projecting Triangles
 				MultiplyMatrixVector(triTranslated.p[0], triProjected.p[0], matProj);
@@ -207,7 +210,7 @@ int main()
 {
 	GameEngine3D demo;
 
-	if (demo.ConstructConsole(120, 80, (float)-0.1, (float)-0.1)) 
+	if (demo.ConstructConsole(120, 90, 4, 4))
 	{
 		demo.Start();
 	}
