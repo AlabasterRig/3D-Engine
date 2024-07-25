@@ -10,6 +10,9 @@ struct vec3d
 struct triangle
 {
 	vec3d p[3];
+
+	wchar_t sym;
+	short col;
 };
 
 
@@ -37,7 +40,7 @@ private:
 	mesh meshCube;
 	mat4x4 matProj;
 	float fTheta = 0.0f;
-	vec3d vCamera;
+	vec3d vCamera = { 0.0f, 0.0f, 0.0f };
 
 	void MultiplyMatrixVector(vec3d& i, vec3d& o, mat4x4& m) // i = input, o = output, m = matrix
 	{
@@ -52,6 +55,45 @@ private:
 			o.x /= w; o.y /= w; o.z /= w;
 		}
 	}
+
+
+	CHAR_INFO GetColour(float x)
+	{
+		short bg_col, fg_col;
+		wchar_t sym;
+		int pixel_bw = (int)(13.0f * x);
+
+		switch (pixel_bw)
+		{
+
+		case 0: bg_col = BG_BLACK; fg_col = FG_BLACK; sym = PIXEL_SOLID;
+			break;
+
+		case 1: bg_col = BG_BLACK; fg_col = FG_DARK_GREY; sym = PIXEL_QUARTER; break;
+		case 2: bg_col = BG_BLACK; fg_col = FG_DARK_GREY; sym = PIXEL_HALF; break;
+		case 3: bg_col = BG_BLACK; fg_col = FG_DARK_GREY; sym = PIXEL_THREEQUARTERS; break;
+		case 4: bg_col = BG_BLACK; fg_col = FG_DARK_GREY; sym = PIXEL_SOLID; break;
+
+		case 5: bg_col = BG_DARK_GREY; fg_col = FG_GREY; sym = PIXEL_QUARTER; break;
+		case 6: bg_col = BG_DARK_GREY; fg_col = FG_GREY; sym = PIXEL_HALF; break;
+		case 7: bg_col = BG_DARK_GREY; fg_col = FG_GREY; sym = PIXEL_THREEQUARTERS; break;
+		case 8: bg_col = BG_DARK_GREY; fg_col = FG_GREY; sym = PIXEL_SOLID; break;
+
+		case 9: bg_col = BG_GREY; fg_col = FG_WHITE; sym = PIXEL_QUARTER; break;
+		case 10: bg_col = BG_GREY; fg_col = FG_WHITE; sym = PIXEL_HALF; break;
+		case 11: bg_col = BG_GREY; fg_col = FG_WHITE; sym = PIXEL_THREEQUARTERS; break;
+		case 12: bg_col = BG_GREY; fg_col = FG_WHITE; sym = PIXEL_SOLID; break;
+
+		default:
+			bg_col = BG_BLACK; fg_col = FG_BLACK; sym = PIXEL_SOLID;
+		}
+
+		CHAR_INFO c;
+		c.Attributes = bg_col | fg_col;
+		c.Char.UnicodeChar = sym;
+		return c;
+	}
+
 
 public:
 
@@ -162,8 +204,8 @@ public:
 			line2.y = triTranslated.p[2].y - triTranslated.p[0].y;
 			line2.z = triTranslated.p[2].z - triTranslated.p[0].z;
 
-			normal.x = line1.z * line2.y - line2.z * line1.y;
-			normal.y = line1.x * line2.z - line2.x * line1.z;
+			normal.x = line1.y * line2.z - line1.z * line2.y;
+			normal.y = line1.z * line2.x - line1.x * line2.z;
 			normal.z = line1.x * line2.y - line1.y * line2.x;
 
 			//Normalising the Normal
@@ -174,14 +216,31 @@ public:
 			normal.z /= l;
 
 
-			if (normal.x * (triTranslated.p[0].x - vCamera.x) + 
+			if (normal.x * (triTranslated.p[0].x - vCamera.x) +
 				normal.y * (triTranslated.p[0].y - vCamera.y) +
 				normal.z * (triTranslated.p[0].z - vCamera.z) < 0.0f)
 			{
+
+				//Illuminate Triangle
+				vec3d LightPosition = { 0.0f, 0.0f, -1.0f };
+
+				float i = sqrtf(LightPosition.x * LightPosition.x + LightPosition.y * LightPosition.y + LightPosition.z * LightPosition.z);
+				LightPosition.x /= i;
+				LightPosition.y /= i;
+				LightPosition.z /= i;
+
+				float DotProduct = normal.x * LightPosition.x + normal.y * LightPosition.y + normal.z * LightPosition.z;
+
+				CHAR_INFO c = GetColour(DotProduct);
+				triTranslated.sym = c.Char.UnicodeChar;
+				triTranslated.col = c.Attributes;
+
 				// Projecting Triangles
 				MultiplyMatrixVector(triTranslated.p[0], triProjected.p[0], matProj);
 				MultiplyMatrixVector(triTranslated.p[1], triProjected.p[1], matProj);
 				MultiplyMatrixVector(triTranslated.p[2], triProjected.p[2], matProj);
+				triProjected.col = triTranslated.col;
+				triProjected.sym = triTranslated.sym;
 
 				//Scale into view
 				triProjected.p[0].x += 1.0f; triProjected.p[0].y += 1.0f;
@@ -190,14 +249,18 @@ public:
 
 				triProjected.p[0].x *= 0.5f * (float)ScreenWidth();
 				triProjected.p[0].y *= 0.5f * (float)ScreenHeight();
-				triProjected.p[1].x *= 0.5f * (float)ScreenWidth(); 
+				triProjected.p[1].x *= 0.5f * (float)ScreenWidth();
 				triProjected.p[1].y *= 0.5f * (float)ScreenHeight();
 				triProjected.p[2].x *= 0.5f * (float)ScreenWidth();
 				triProjected.p[2].y *= 0.5f * (float)ScreenHeight();
 
 				//Draw Triangle
-				DrawTriangle((int)triProjected.p[0].x, (int)triProjected.p[0].y, (int)triProjected.p[1].x,
-					(int)triProjected.p[1].y, (int)triProjected.p[2].x, (int)triProjected.p[2].y, PIXEL_SOLID, FG_WHITE);
+				FillTriangle((int)triProjected.p[0].x, (int)triProjected.p[0].y, (int)triProjected.p[1].x,
+					(int)triProjected.p[1].y, (int)triProjected.p[2].x, (int)triProjected.p[2].y, triProjected.sym, triProjected.col);
+				
+				//WireFrame
+				/* DrawTriangle((int)triProjected.p[0].x, (int)triProjected.p[0].y, (int)triProjected.p[1].x,
+					(int)triProjected.p[1].y, (int)triProjected.p[2].x, (int)triProjected.p[2].y, PIXEL_SOLID, FG_WHITE); */
 			}
 		}
 
@@ -210,7 +273,7 @@ int main()
 {
 	GameEngine3D demo;
 
-	if (demo.ConstructConsole(120, 90, 4, 4))
+	if (demo.ConstructConsole(750, 300, 1, 1))
 	{
 		demo.Start();
 	}
