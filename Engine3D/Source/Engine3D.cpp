@@ -1,6 +1,7 @@
 ﻿#include "olcConsoleGameEngine.h"
 #include <fstream>
 #include <strstream>
+#include <algorithm>
 using namespace std;
 
 struct vec3d
@@ -96,6 +97,50 @@ private:
 		}
 	}
 
+	vec3d VectorAdd(vec3d& v1, vec3d& v2)
+	{
+		return { v1.x + v2.x, v1.y + v2.y, v1.z + v2.z };
+	}
+
+	vec3d VectorSub(vec3d& v1, vec3d& v2)
+	{
+		return { v1.x - v2.x, v1.y - v2.y, v1.z - v2.z };
+	}
+
+	vec3d VectorMul(vec3d& v1, float k)
+	{
+		return { v1.x * k, v1.y * k, v1.z * k };
+	}
+
+	vec3d VectorDiv(vec3d& v1, float k)
+	{
+		return { v1.x / k, v1.y / k, v1.z / k };
+	}
+
+	float VectorDotP(vec3d& v1, vec3d& v2)
+	{
+		return v1.x * v2.x, v1.y * v2.y, v1.z * v1.z;
+	}
+
+	float VectorLength(vec3d& v)
+	{
+		return sqrtf(VectorDotP(v, v));
+	}
+
+	vec3d Vctor_Normalise(vec3d& v1)
+	{
+		float l = VectorLength(v1);
+		return { v1.x / l, v1.y / l, v1.z / l };
+	}
+
+	vec3d VectorCrossProduct(vec3d& v1, vec3d& v2)
+	{
+		vec3d v;
+		v.x = v1.y * v2.z - v1.z * v2.y;
+		v.y = v1.z * v2.x - v1.x * v2.z;
+		v.z = v1.x * v2.y - v1.y * v2.x;
+		return v;
+	}
 
 	CHAR_INFO GetColour(float x)
 	{
@@ -139,40 +184,40 @@ public:
 
 	bool OnUserCreate() override
 	{
-		//meshCube.tris = {
+		meshCube.tris = {
 
-		//	// SOUTH
-		//	{ 0.0f, 0.0f, 0.0f,    0.0f, 1.0f, 0.0f,    1.0f, 1.0f, 0.0f },
-		//	{ 0.0f, 0.0f, 0.0f,    1.0f, 1.0f, 0.0f,    1.0f, 0.0f, 0.0f },
+			// SOUTH
+			{ 0.0f, 0.0f, 0.0f,    0.0f, 1.0f, 0.0f,    1.0f, 1.0f, 0.0f },
+			{ 0.0f, 0.0f, 0.0f,    1.0f, 1.0f, 0.0f,    1.0f, 0.0f, 0.0f },
 
-		//	// EAST                                                      
-		//	{ 1.0f, 0.0f, 0.0f,    1.0f, 1.0f, 0.0f,    1.0f, 1.0f, 1.0f },
-		//	{ 1.0f, 0.0f, 0.0f,    1.0f, 1.0f, 1.0f,    1.0f, 0.0f, 1.0f },
+			// EAST                                                      
+			{ 1.0f, 0.0f, 0.0f,    1.0f, 1.0f, 0.0f,    1.0f, 1.0f, 1.0f },
+			{ 1.0f, 0.0f, 0.0f,    1.0f, 1.0f, 1.0f,    1.0f, 0.0f, 1.0f },
 
-		//	// NORTH                                                     
-		//	{ 1.0f, 0.0f, 1.0f,    1.0f, 1.0f, 1.0f,    0.0f, 1.0f, 1.0f },
-		//	{ 1.0f, 0.0f, 1.0f,    0.0f, 1.0f, 1.0f,    0.0f, 0.0f, 1.0f },
+			// NORTH                                                     
+			{ 1.0f, 0.0f, 1.0f,    1.0f, 1.0f, 1.0f,    0.0f, 1.0f, 1.0f },
+			{ 1.0f, 0.0f, 1.0f,    0.0f, 1.0f, 1.0f,    0.0f, 0.0f, 1.0f },
 
-		//	// WEST                                                      
-		//	{ 0.0f, 0.0f, 1.0f,    0.0f, 1.0f, 1.0f,    0.0f, 1.0f, 0.0f },
-		//	{ 0.0f, 0.0f, 1.0f,    0.0f, 1.0f, 0.0f,    0.0f, 0.0f, 0.0f },
+			// WEST                                                      
+			{ 0.0f, 0.0f, 1.0f,    0.0f, 1.0f, 1.0f,    0.0f, 1.0f, 0.0f },
+			{ 0.0f, 0.0f, 1.0f,    0.0f, 1.0f, 0.0f,    0.0f, 0.0f, 0.0f },
 
-		//	// TOP                                                       
-		//	{ 0.0f, 1.0f, 0.0f,    0.0f, 1.0f, 1.0f,    1.0f, 1.0f, 1.0f },
-		//	{ 0.0f, 1.0f, 0.0f,    1.0f, 1.0f, 1.0f,    1.0f, 1.0f, 0.0f },
+			// TOP                                                       
+			{ 0.0f, 1.0f, 0.0f,    0.0f, 1.0f, 1.0f,    1.0f, 1.0f, 1.0f },
+			{ 0.0f, 1.0f, 0.0f,    1.0f, 1.0f, 1.0f,    1.0f, 1.0f, 0.0f },
 
-		//	// BOTTOM                                                    
-		//	{ 1.0f, 0.0f, 1.0f,    0.0f, 0.0f, 1.0f,    0.0f, 0.0f, 0.0f },
-		//	{ 1.0f, 0.0f, 1.0f,    0.0f, 0.0f, 0.0f,    1.0f, 0.0f, 0.0f },
+			// BOTTOM                                                    
+			{ 1.0f, 0.0f, 1.0f,    0.0f, 0.0f, 1.0f,    0.0f, 0.0f, 0.0f },
+			{ 1.0f, 0.0f, 1.0f,    0.0f, 0.0f, 0.0f,    1.0f, 0.0f, 0.0f },
 
-		//}; 
+		}; 
 
-		meshCube.LoadFromObjectFile("VideoShip.obj");
+		// meshCube.LoadFromObjectFile("VideoShip.obj");
 
 		//Projection Matrix
 		float fNear = 0.1f;
 		float fFar = 1000.0f;
-		float fFov = 60.0f;
+		float fFov = 90.0f;
 		float aspectRatio = (float)ScreenHeight() / (float)ScreenWidth();
 		float fFovRad = 1.0f / tanf(fFov * 0.5f / 180.0f * 3.14159f);
 
@@ -212,6 +257,7 @@ public:
 		matRotX.m[2][2] = cosf(fTheta);
 		matRotX.m[3][3] = 1.0f;
 
+		vector<triangle> vecTrianglesToRaster;
 
 		//Draw Triangles
 		for (auto tri : meshCube.tris)
@@ -230,9 +276,9 @@ public:
 
 
 			triTranslated = triRotatedX;
-			triTranslated.p[0].z = triTranslated.p[0].z + 8.0f;
-			triTranslated.p[1].z = triTranslated.p[1].z + 8.0f;
-			triTranslated.p[2].z = triTranslated.p[2].z + 8.0f;
+			triTranslated.p[0].z = triTranslated.p[0].z + 3.0f;
+			triTranslated.p[1].z = triTranslated.p[1].z + 3.0f;
+			triTranslated.p[2].z = triTranslated.p[2].z + 3.0f;
 
 
 			// Normal Identification
@@ -296,14 +342,27 @@ public:
 				triProjected.p[2].x *= 0.5f * (float)ScreenWidth();
 				triProjected.p[2].y *= 0.5f * (float)ScreenHeight();
 
-				//Draw Triangle
-				FillTriangle((int)triProjected.p[0].x, (int)triProjected.p[0].y, (int)triProjected.p[1].x,
-					(int)triProjected.p[1].y, (int)triProjected.p[2].x, (int)triProjected.p[2].y, triProjected.sym, triProjected.col);
-				
-				//WireFrame
-				/* DrawTriangle((int)triProjected.p[0].x, (int)triProjected.p[0].y, (int)triProjected.p[1].x,
-					(int)triProjected.p[1].y, (int)triProjected.p[2].x, (int)triProjected.p[2].y, PIXEL_SOLID, FG_WHITE); */
+				vecTrianglesToRaster.push_back(triProjected);
 			}
+		}
+
+		//Sort Triangles from back to front
+		sort(vecTrianglesToRaster.begin(), vecTrianglesToRaster.end(), [](triangle& t1, triangle& t2)
+			{
+				float midPoint1 = (t1.p[0].z + t1.p[1].z + t1.p[2].z) / 3.0f;
+				float midPoint2 = (t2.p[0].z + t2.p[1].z + t2.p[2].z) / 3.0f;
+				return midPoint1 > midPoint2;
+			});
+
+		for (auto& triProjected : vecTrianglesToRaster)
+		{
+			//Draw Triangle
+			FillTriangle((int)triProjected.p[0].x, (int)triProjected.p[0].y, (int)triProjected.p[1].x,
+				(int)triProjected.p[1].y, (int)triProjected.p[2].x, (int)triProjected.p[2].y, triProjected.sym, triProjected.col);
+
+			//WireFrame
+			 /* DrawTriangle((int)triProjected.p[0].x, (int)triProjected.p[0].y, (int)triProjected.p[1].x,
+				(int)triProjected.p[1].y, (int)triProjected.p[2].x, (int)triProjected.p[2].y, PIXEL_SOLID, FG_WHITE); */
 		}
 
 		return true;
@@ -315,7 +374,7 @@ int main()
 {
 	GameEngine3D demo;
 
-	if (demo.ConstructConsole(256, 240, 2, 2))
+	if (demo.ConstructConsole(120, 90, 4, 4))
 	{
 		demo.Start();
 	}
