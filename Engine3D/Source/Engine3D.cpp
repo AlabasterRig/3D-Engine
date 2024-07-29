@@ -6,7 +6,7 @@ using namespace std;
 
 struct vec3d
 {
-	float x, y, z, w;
+	float x = 0, y = 0, z = 0, w = 1;
 };
 
 
@@ -173,7 +173,7 @@ private:
 		{
 			for (int r = 0; r < 4; r++)
 			{
-				matrix.m[r][c] = m1.m[r][0] * m2.m[0][c] + m1.m[r][1] * m2[1][c] + m1.m[r][2] * m2.m[2][c] + m1.m[r][3] * m2.m[3][c];
+				matrix.m[r][c] = m1.m[r][0] * m2.m[0][c] + m1.m[r][1] * m2.m[1][c] + m1.m[r][2] * m2.m[2][c] + m1.m[r][3] * m2.m[3][c];
 			}
 		}
 		return matrix;
@@ -349,43 +349,41 @@ public:
 			//Normalising the Normal
 			normal = VectorNormalise(normal);
 
-
-			float l = sqrtf((normal.x * normal.x) + (normal.y * normal.y) + (normal.z * normal.z));
-			normal.x /= l;
-			normal.y /= l;
-			normal.z /= l;
+			vec3d vCameraRay = VectorSub(triTransformed.p[0], vCamera);
 
 
-			if (normal.x * (triTranslated.p[0].x - vCamera.x) +
-				normal.y * (triTranslated.p[0].y - vCamera.y) +
-				normal.z * (triTranslated.p[0].z - vCamera.z) < 0.0f)
+			if (VectorDotP(normal, vCameraRay) < 0.0f)
 			{
 
 				//Illuminate Triangle
-				vec3d LightPosition = { 0.0f, 0.0f, -1.0f };
+				vec3d LightDirection = { 0.0f, 1.0f, -1.0f };
 
-				float i = sqrtf(LightPosition.x * LightPosition.x + LightPosition.y * LightPosition.y + LightPosition.z * LightPosition.z);
-				LightPosition.x /= i;
-				LightPosition.y /= i;
-				LightPosition.z /= i;
+				LightDirection = VectorNormalise(LightDirection);
 
-				float DotProduct = normal.x * LightPosition.x + normal.y * LightPosition.y + normal.z * LightPosition.z;
+				//Alignment oflight direction and triangle surface model
+				float DotProduct = max(0.1f, VectorDotP(LightDirection, normal));
 
 				CHAR_INFO c = GetColour(DotProduct);
-				triTranslated.sym = c.Char.UnicodeChar;
-				triTranslated.col = c.Attributes;
+				triTransformed.sym = c.Char.UnicodeChar;
+				triTransformed.col = c.Attributes;
 
 				// Projecting Triangles
-				MultiplyMatrixVector(triTranslated.p[0], triProjected.p[0], matProj);
-				MultiplyMatrixVector(triTranslated.p[1], triProjected.p[1], matProj);
-				MultiplyMatrixVector(triTranslated.p[2], triProjected.p[2], matProj);
-				triProjected.col = triTranslated.col;
-				triProjected.sym = triTranslated.sym;
+				triProjected.p[0] = MultiplyMatrixVector(matProj, triTransformed.p[0]);
+				triProjected.p[1] = MultiplyMatrixVector(matProj, triTransformed.p[1]);
+				triProjected.p[2] = MultiplyMatrixVector(matProj, triTransformed.p[2]);
+				triProjected.col = triTransformed.col;
+				triProjected.sym = triTransformed.sym;
 
-				//Scale into view
-				triProjected.p[0].x += 1.0f; triProjected.p[0].y += 1.0f;
-				triProjected.p[1].x += 1.0f; triProjected.p[1].y += 1.0f;
-				triProjected.p[2].x += 1.0f; triProjected.p[2].y += 1.0f;
+				//Normalising 
+				triProjected.p[0] = VectorDiv(triProjected.p[0], triProjected.p[0].w);
+				triProjected.p[1] = VectorDiv(triProjected.p[1], triProjected.p[1].w);
+				triProjected.p[2] = VectorDiv(triProjected.p[2], triProjected.p[2].w);
+
+				//Offsets Verts into visible normalised space
+				vec3d vOffsetView = { 1,1,0 };
+				triProjected.p[0] = VectorAdd(triProjected.p[0], vOffsetView);
+				triProjected.p[1] = VectorAdd(triProjected.p[1], vOffsetView);
+				triProjected.p[2] = VectorAdd(triProjected.p[2], vOffsetView);
 
 				triProjected.p[0].x *= 0.5f * (float)ScreenWidth();
 				triProjected.p[0].y *= 0.5f * (float)ScreenHeight();
