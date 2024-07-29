@@ -22,7 +22,7 @@ struct triangle
 struct mesh
 {
 	vector<triangle> tris;
-
+	
 	bool LoadFromObjectFile(string sFilename)
 	{
 		ifstream f(sFilename);
@@ -34,7 +34,7 @@ struct mesh
 
 		while (!f.eof())
 		{
-			char line[500];
+			char line[128];
 			f.getline(line, 128);
 
 			strstream s;
@@ -159,7 +159,7 @@ private:
 		matrix.m[0][0] = fAspectRatio * fFovRad;
 		matrix.m[1][1] = fFovRad;
 		matrix.m[2][2] = fFar / (fFar - fNear);
-		matrix.m[3][3] = (-fFar * fNear) / (fFar - fNear);
+		matrix.m[3][2] = (-fFar * fNear) / (fFar - fNear);
 		matrix.m[2][3] = 1.0f;
 		matrix.m[3][3] = 0.0f;
 		return matrix;
@@ -169,12 +169,8 @@ private:
 	{
 		mat4x4 matrix;
 		for (int c = 0; c < 4; c++)
-		{
 			for (int r = 0; r < 4; r++)
-			{
 				matrix.m[r][c] = m1.m[r][0] * m2.m[0][c] + m1.m[r][1] * m2.m[1][c] + m1.m[r][2] * m2.m[2][c] + m1.m[r][3] * m2.m[3][c];
-			}
-		}
 		return matrix;
 	}
 
@@ -200,7 +196,7 @@ private:
 
 	float VectorDotP(vec3d& v1, vec3d& v2)
 	{
-		return v1.x * v2.x, v1.y * v2.y, v1.z * v1.z;
+		return v1.x * v2.x, v1.y * v2.y, v1.z * v2.z;
 	}
 
 	float VectorLength(vec3d& v)
@@ -293,10 +289,7 @@ public:
 
 		//}; 
 
-		if (!meshCube.LoadFromObjectFile("C:\Users\utkri\source\repos\Engine3D\Engine3D\Models\VideoShip.obj"))
-		{
-			return false; // Handle error if file fails to load
-		}
+		meshCube.LoadFromObjectFile("VideoShip.obj");
 
 		//Projection Matrix
 		MatrixMakeProjection(90.0f, (float)ScreenHeight() / (float)ScreenWidth(), 0.1f, 1000.0f);
@@ -409,8 +402,8 @@ public:
 		for (auto& triProjected : vecTrianglesToRaster)
 		{
 			//Draw Triangle
-			FillTriangle((int)triProjected.p[0].x, (int)triProjected.p[0].y, (int)triProjected.p[1].x,
-				(int)triProjected.p[1].y, (int)triProjected.p[2].x, (int)triProjected.p[2].y, triProjected.sym, triProjected.col);
+			FillTriangle(triProjected.p[0].x, triProjected.p[0].y, triProjected.p[1].x,
+				triProjected.p[1].y, triProjected.p[2].x, triProjected.p[2].y, triProjected.sym, triProjected.col);
 
 			//WireFrame
 			 /* DrawTriangle((int)triProjected.p[0].x, (int)triProjected.p[0].y, (int)triProjected.p[1].x,

@@ -12,6 +12,10 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Source\olcConsoleGameEngine.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Object Include="Models\ak-107.obj" />
     <Object Include="Models\VideoShip.obj" />
   </ItemGroup>
 </Project>
