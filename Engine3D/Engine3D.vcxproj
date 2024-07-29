@@ -149,6 +149,9 @@
   <ItemGroup>
     <ClCompile Include="Source\Engine3D.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <Object Include="Models\VideoShip.obj" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

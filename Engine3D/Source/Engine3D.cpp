@@ -34,7 +34,7 @@ struct mesh
 
 		while (!f.eof())
 		{
-			char line[128];
+			char line[500];
 			f.getline(line, 128);
 
 			strstream s;
@@ -56,7 +56,6 @@ struct mesh
 				tris.push_back({ verts[f[0] - 1], verts[f[1] - 1], verts[f[2] - 1] });
 			}
 		}
-
 		return true;
 	}
 
@@ -294,7 +293,10 @@ public:
 
 		//}; 
 
-		meshCube.LoadFromObjectFile("VideoShip.obj");
+		if (!meshCube.LoadFromObjectFile("C:\Users\utkri\source\repos\Engine3D\Engine3D\Models\VideoShip.obj"))
+		{
+			return false; // Handle error if file fails to load
+		}
 
 		//Projection Matrix
 		MatrixMakeProjection(90.0f, (float)ScreenHeight() / (float)ScreenWidth(), 0.1f, 1000.0f);
@@ -424,7 +426,7 @@ int main()
 {
 	GameEngine3D demo;
 
-	if (demo.ConstructConsole(120, 90, 4, 4))
+	if (demo.ConstructConsole(256, 240, 2, 2))
 	{
 		demo.Start();
 	}
