@@ -93,7 +93,7 @@ private:
 		return v;
 	}
 
-	mat4x4 MatriMakeIdentity()
+	mat4x4 MatrixMakeIdentity()
 	{
 		mat4x4 matrix;
 		matrix.m[0][0] = 1.0f;
@@ -196,7 +196,7 @@ private:
 
 	float VectorDotP(vec3d& v1, vec3d& v2)
 	{
-		return v1.x * v2.x, v1.y * v2.y, v1.z * v2.z;
+		return v1.x * v2.x + v1.y * v2.y + v1.z * v2.z;
 	}
 
 	float VectorLength(vec3d& v)
@@ -261,38 +261,10 @@ public:
 
 	bool OnUserCreate() override
 	{
-		//meshCube.tris = {
-
-		//	// SOUTH
-		//	{ 0.0f, 0.0f, 0.0f,    0.0f, 1.0f, 0.0f,    1.0f, 1.0f, 0.0f },
-		//	{ 0.0f, 0.0f, 0.0f,    1.0f, 1.0f, 0.0f,    1.0f, 0.0f, 0.0f },
-
-		//	// EAST                                                      
-		//	{ 1.0f, 0.0f, 0.0f,    1.0f, 1.0f, 0.0f,    1.0f, 1.0f, 1.0f },
-		//	{ 1.0f, 0.0f, 0.0f,    1.0f, 1.0f, 1.0f,    1.0f, 0.0f, 1.0f },
-
-		//	// NORTH                                                     
-		//	{ 1.0f, 0.0f, 1.0f,    1.0f, 1.0f, 1.0f,    0.0f, 1.0f, 1.0f },
-		//	{ 1.0f, 0.0f, 1.0f,    0.0f, 1.0f, 1.0f,    0.0f, 0.0f, 1.0f },
-
-		//	// WEST                                                      
-		//	{ 0.0f, 0.0f, 1.0f,    0.0f, 1.0f, 1.0f,    0.0f, 1.0f, 0.0f },
-		//	{ 0.0f, 0.0f, 1.0f,    0.0f, 1.0f, 0.0f,    0.0f, 0.0f, 0.0f },
-
-		//	// TOP                                                       
-		//	{ 0.0f, 1.0f, 0.0f,    0.0f, 1.0f, 1.0f,    1.0f, 1.0f, 1.0f },
-		//	{ 0.0f, 1.0f, 0.0f,    1.0f, 1.0f, 1.0f,    1.0f, 1.0f, 0.0f },
-
-		//	// BOTTOM                                                    
-		//	{ 1.0f, 0.0f, 1.0f,    0.0f, 0.0f, 1.0f,    0.0f, 0.0f, 0.0f },
-		//	{ 1.0f, 0.0f, 1.0f,    0.0f, 0.0f, 0.0f,    1.0f, 0.0f, 0.0f },
-
-		//}; 
-
 		meshCube.LoadFromObjectFile("VideoShip.obj");
 
 		//Projection Matrix
-		MatrixMakeProjection(90.0f, (float)ScreenHeight() / (float)ScreenWidth(), 0.1f, 1000.0f);
+		matProj = MatrixMakeProjection(90.0f, (float)ScreenHeight() / (float)ScreenWidth(), 0.1f, 1000.0f);
 
 		return true;
 	}
@@ -316,7 +288,7 @@ public:
 
 		//World Matrix for Translation
 		mat4x4 matWorld;
-		matWorld = MatriMakeIdentity();
+		matWorld = MatrixMakeIdentity();
 		matWorld = MatrixMultiplyMatrix(matRotZ, matRotX);
 		matWorld = MatrixMultiplyMatrix(matWorld, matTrans);
 
@@ -419,7 +391,7 @@ int main()
 {
 	GameEngine3D demo;
 
-	if (demo.ConstructConsole(256, 240, 2, 2))
+	if (demo.ConstructConsole(256, 240, 3, 3))
 	{
 		demo.Start();
 	}
