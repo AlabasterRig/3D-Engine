@@ -261,7 +261,7 @@ public:
 
 	bool OnUserCreate() override
 	{
-		meshCube.LoadFromObjectFile("VideoShip.obj");
+		meshCube.LoadFromObjectFile("ak-107.obj");
 
 		//Projection Matrix
 		matProj = MatrixMakeProjection(90.0f, (float)ScreenHeight() / (float)ScreenWidth(), 0.1f, 1000.0f);
@@ -278,13 +278,14 @@ public:
 		//Rotation Matrix Var
 		mat4x4 matRotZ, matRotX;
 		fTheta += 1.0f * fElapsedTime;
+
 		//Rotation Z
 		matRotZ = MatrixMakeRotationZ(fTheta * 0.5f);
 		//Rotation X
 		matRotX = MatrixMakeRotationX(fTheta);
 
 		mat4x4 matTrans;
-		matTrans = MatrixMakeTranslation(0.0f, 0.0f, 16.0f);
+		matTrans = MatrixMakeTranslation(0.0f, 0.0f, 8.0f);  //Controls Distance to Camera on z axis
 
 		//World Matrix for Translation
 		mat4x4 matWorld;
