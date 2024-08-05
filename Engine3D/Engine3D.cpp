@@ -22,7 +22,7 @@ struct triangle
 struct mesh
 {
 	vector<triangle> tris;
-	
+
 	bool LoadFromObjectFile(string sFilename)
 	{
 		ifstream f(sFilename);
@@ -59,7 +59,7 @@ struct mesh
 		return true;
 	}
 
-}; 
+};
 
 struct mat4x4
 {
@@ -81,6 +81,7 @@ private:
 	mat4x4 matProj;
 	float fTheta = 0.0f;
 	vec3d vCamera = { 0.0f, 0.0f, 0.0f };
+	vec3d vLookDir;
 
 	vec3d MultiplyMatrixVector(mat4x4& m, vec3d& i) // i = input, m = matrix
 	{
@@ -89,7 +90,7 @@ private:
 		v.y = i.x * m.m[0][1] + i.y * m.m[1][1] + i.z * m.m[2][1] + i.w * m.m[3][1];
 		v.z = i.x * m.m[0][2] + i.y * m.m[1][2] + i.z * m.m[2][2] + i.w * m.m[3][2];
 		v.w = i.x * m.m[0][3] + i.y * m.m[1][3] + i.z * m.m[2][3] + i.w * m.m[3][3];
-		
+
 		return v;
 	}
 
@@ -171,6 +172,45 @@ private:
 		for (int c = 0; c < 4; c++)
 			for (int r = 0; r < 4; r++)
 				matrix.m[r][c] = m1.m[r][0] * m2.m[0][c] + m1.m[r][1] * m2.m[1][c] + m1.m[r][2] * m2.m[2][c] + m1.m[r][3] * m2.m[3][c];
+		return matrix;
+	}
+
+	mat4x4 MatrixPointAt(vec3d& pos, vec3d& target, vec3d& up)  // Points to the object
+	{
+		//Create Forward Vector for Forward Direction
+		vec3d newForward = VectorSub(target, pos);
+		newForward = VectorNormalise(newForward);
+
+		// Calculate new Up Vector Direction
+		vec3d temp = VectorMul(newForward, VectorDotP(up, newForward));
+		vec3d newUp = VectorSub(up, temp);
+		newUp = VectorNormalise(newUp);
+
+		//Right Direction
+		vec3d Right = VectorCrossProduct(newUp, newForward);
+
+		mat4x4 matrix;
+
+		matrix.m[0][0] = Right.x;  matrix.m[0][1] = Right.y;  matrix.m[0][2] = Right.z;  matrix.m[0][3] = 0.0f;
+		matrix.m[1][0] = newUp.x;  matrix.m[1][1] = newUp.y;  matrix.m[1][2] = newUp.z;  matrix.m[1][3] = 0.0f;
+		matrix.m[2][0] = newForward.x;  matrix.m[2][1] = newForward.y;  matrix.m[2][2] = newForward.z;  matrix.m[2][3] = 0.0f;
+		matrix.m[3][0] = pos.x;  matrix.m[3][1] = pos.y;  matrix.m[3][2] = pos.z;  matrix.m[3][3] = 1.0f;
+
+		return matrix;
+	}
+
+	mat4x4 MatrixQuickInverse(mat4x4 &m)
+	{
+		mat4x4 matrix;
+
+		matrix.m[0][0] = m.m[0][0]; matrix.m[0][1] = m.m[1][0]; matrix.m[0][2] = m.m[2][0]; matrix.m[0][3] = 0.0f;
+		matrix.m[1][0] = m.m[0][1]; matrix.m[1][1] = m.m[1][1]; matrix.m[1][2] = m.m[2][1]; matrix.m[1][3] = 0.0f;
+		matrix.m[2][0] = m.m[0][2]; matrix.m[2][1] = m.m[1][2]; matrix.m[2][2] = m.m[2][2]; matrix.m[2][3] = 0.0f;
+		matrix.m[3][0] = -(m.m[3][0] * matrix.m[0][0] + m.m[3][1] * matrix.m[1][0] + m.m[3][2] * matrix.m[2][0]);
+		matrix.m[3][1] = -(m.m[3][0] * matrix.m[0][1] + m.m[3][1] * matrix.m[1][1] + m.m[3][2] * matrix.m[2][1]);
+		matrix.m[3][2] = -(m.m[3][0] * matrix.m[0][2] + m.m[3][1] * matrix.m[1][2] + m.m[3][2] * matrix.m[2][2]);
+		matrix.m[3][3] = 1.0f;
+
 		return matrix;
 	}
 
@@ -261,7 +301,7 @@ public:
 
 	bool OnUserCreate() override
 	{
-		meshCube.LoadFromObjectFile("ak-107.obj");
+		meshCube.LoadFromObjectFile("axis.obj");
 
 		//Projection Matrix
 		matProj = MatrixMakeProjection(90.0f, (float)ScreenHeight() / (float)ScreenWidth(), 0.1f, 1000.0f);
@@ -272,12 +312,29 @@ public:
 
 	bool OnUserUpdate(float fElapsedTime) override
 	{
+		if (GetKey(VK_UP).bHeld)
+		{
+			vCamera.y += 8.0f * fElapsedTime;
+		}
+		if (GetKey(VK_DOWN).bHeld)
+		{
+			vCamera.y -= 8.0f * fElapsedTime;
+		}
+		if (GetKey(VK_RIGHT).bHeld)
+		{
+			vCamera.x += 8.0f * fElapsedTime;
+		}
+		if (GetKey(VK_LEFT).bHeld)
+		{
+			vCamera.x -= 8.0f * fElapsedTime;
+		}
+
 
 		Fill(0, 0, ScreenWidth(), ScreenHeight(), PIXEL_SOLID, FG_BLACK);
 
 		//Rotation Matrix Var
 		mat4x4 matRotZ, matRotX;
-		fTheta += 1.0f * fElapsedTime;
+		// fTheta += 1.0f * fElapsedTime;
 
 		//Rotation Z
 		matRotZ = MatrixMakeRotationZ(fTheta * 0.5f);
@@ -293,12 +350,22 @@ public:
 		matWorld = MatrixMultiplyMatrix(matRotZ, matRotX);
 		matWorld = MatrixMultiplyMatrix(matWorld, matTrans);
 
+		//Camera Set-Up
+		vLookDir = { 0,0,1 };
+		vec3d vUp = { 0,1,0 };
+		vec3d vTarget = VectorAdd(vCamera, vLookDir);
+
+		//Camera Matrix
+		mat4x4 matCamera = MatrixPointAt(vCamera, vTarget, vUp);
+		//View Matrix is inverse of camera Matrix
+		mat4x4 viewMatrix = MatrixQuickInverse(matCamera);
+
 		vector<triangle> vecTrianglesToRaster;
 
 		//Draw Triangles
 		for (auto tri : meshCube.tris)
 		{
-			triangle triProjected, triTransformed;
+			triangle triProjected, triTransformed, triViewed;
 
 			triTransformed.p[0] = MultiplyMatrixVector(matWorld, tri.p[0]);
 			triTransformed.p[1] = MultiplyMatrixVector(matWorld, tri.p[1]);
@@ -335,10 +402,15 @@ public:
 				triTransformed.sym = c.Char.UnicodeChar;
 				triTransformed.col = c.Attributes;
 
-				// Projecting Triangles
-				triProjected.p[0] = MultiplyMatrixVector(matProj, triTransformed.p[0]);
-				triProjected.p[1] = MultiplyMatrixVector(matProj, triTransformed.p[1]);
-				triProjected.p[2] = MultiplyMatrixVector(matProj, triTransformed.p[2]);
+				//Camera View Space
+				triViewed.p[0] = MultiplyMatrixVector(viewMatrix, triTransformed.p[0]);
+				triViewed.p[1] = MultiplyMatrixVector(viewMatrix, triTransformed.p[1]);
+				triViewed.p[2] = MultiplyMatrixVector(viewMatrix, triTransformed.p[2]);
+
+				// Projecting Triangles 3D to 2D
+				triProjected.p[0] = MultiplyMatrixVector(matProj, triViewed.p[0]);
+				triProjected.p[1] = MultiplyMatrixVector(matProj, triViewed.p[1]);
+				triProjected.p[2] = MultiplyMatrixVector(matProj, triViewed.p[2]);
 				triProjected.col = triTransformed.col;
 				triProjected.sym = triTransformed.sym;
 
