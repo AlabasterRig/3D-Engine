@@ -82,6 +82,7 @@ private:
 	float fTheta = 0.0f;
 	vec3d vCamera = { 0.0f, 0.0f, 0.0f };
 	vec3d vLookDir;
+	float fYaw;
 
 	vec3d MultiplyMatrixVector(mat4x4& m, vec3d& i) // i = input, m = matrix
 	{
@@ -329,6 +330,25 @@ public:
 			vCamera.x -= 8.0f * fElapsedTime;
 		}
 
+		vec3d vForward = VectorMul(vLookDir, 4.0f * fElapsedTime);
+
+		if (GetKey(L'W').bHeld)
+		{
+			vCamera = VectorAdd(vCamera, vForward);
+		}
+		if (GetKey(L'S').bHeld)
+		{
+			vCamera = VectorSub(vCamera, vForward);
+		}
+		if (GetKey(L'A').bHeld)
+		{
+			fYaw -= 2.0f * fElapsedTime;
+		}
+		if (GetKey(L'D').bHeld)
+		{
+			fYaw += 2.0f * fElapsedTime;
+		}
+
 
 		Fill(0, 0, ScreenWidth(), ScreenHeight(), PIXEL_SOLID, FG_BLACK);
 
@@ -351,9 +371,13 @@ public:
 		matWorld = MatrixMultiplyMatrix(matWorld, matTrans);
 
 		//Camera Set-Up
-		vLookDir = { 0,0,1 };
 		vec3d vUp = { 0,1,0 };
-		vec3d vTarget = VectorAdd(vCamera, vLookDir);
+		vec3d vTarget = { 0,0,1 };
+
+		//Camera Rotation Matrix
+		mat4x4 matMakeRotate = MatrixMakeRotationY(fYaw);
+		vLookDir = MultiplyMatrixVector(matMakeRotate, vTarget);
+		vTarget = VectorAdd(vCamera, vLookDir);
 
 		//Camera Matrix
 		mat4x4 matCamera = MatrixPointAt(vCamera, vTarget, vUp);
