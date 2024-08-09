@@ -176,7 +176,7 @@ private:
 		return matrix;
 	}
 
-	mat4x4 MatrixPointAt(vec3d& pos, vec3d& target, vec3d& up)  // Points to the object
+	mat4x4 MatrixPointAt(vec3d& pos, vec3d& target, vec3d& up)  // Points to the object (Formula To Code)
 	{
 		//Create Forward Vector for Forward Direction
 		vec3d newForward = VectorSub(target, pos);
@@ -260,6 +260,119 @@ private:
 		return v;
 	}
 
+	//Algorithm to compute how lines intersect with planes (Taken formula from internet and converted to code directly)
+	vec3d VectorIntersectPlane(vec3d& plane_p, vec3d& plane_n, vec3d& lineStart, vec3d& lineEnd)
+	{
+		plane_n = VectorNormalise(plane_n);
+		float plane_d = -VectorDotP(plane_n, plane_p);
+		float ad = VectorDotP(lineStart, plane_n);
+		float bd = VectorDotP(lineEnd, plane_n);
+		float t = (-plane_d - ad) / (bd - ad);
+		vec3d lineStartToEnd = VectorSub(lineEnd, lineStart);
+		vec3d lineToIntersect = VectorMul(lineStartToEnd, t);
+
+		return VectorAdd(lineStart, lineToIntersect);
+	}
+
+	int TriangleClipAgainstPlane(vec3d plane_p, vec3d plane_n, triangle& inTri, triangle& outTri1, triangle& outTri2)
+	{
+		plane_n = VectorNormalise(plane_n);
+
+		auto dist = [&](vec3d& p)
+			{
+				vec3d n = VectorNormalise(p);
+				return (plane_n.x * p.x + plane_n.y * p.y + plane_n.z * p.z - VectorDotP(plane_n, plane_p));
+			};
+
+		//Temporary Storage for - if distance is positive it will store in 'insidePoints' vector and vice versa
+		vec3d* insidePoints[3];
+		vec3d* outsidePoints[3];
+		int insidePointsCount = 0;
+		int outsidePointsCount = 0;
+
+		//Get signed Distance of each point in the plane
+
+		float d0 = dist(inTri.p[0]);
+		float d1 = dist(inTri.p[1]);
+		float d2 = dist(inTri.p[2]);
+
+		//Point 1
+		if (d0 >= 0)
+		{
+			insidePoints[insidePointsCount++] = &inTri.p[0];
+		}
+		else {
+			outsidePoints[outsidePointsCount++] = &inTri.p[0];
+		}
+
+		//Point 2
+		if (d1 >= 0)
+		{
+			insidePoints[insidePointsCount++] = &inTri.p[1];
+		}
+		else {
+			outsidePoints[outsidePointsCount++] = &inTri.p[1];
+		}
+
+		//Point 3
+		if (d2 > 0)
+		{
+			insidePoints[insidePointsCount++] = &inTri.p[2];
+		}
+		else {
+			outsidePoints[outsidePointsCount++] = &inTri.p[2];
+		}
+
+		//Classify and break triangle into smaller triangles. There are Four Outcomes
+		
+		if (insidePointsCount == 0)
+		{
+			return 0; // All points of triangle lie outside plane so clip whole triangle
+		}
+
+		if (insidePointsCount == 3)
+		{
+			outTri1 = inTri; // All points lie inside plane, so do nothing
+
+			return 1;
+		}
+
+		if (insidePointsCount == 1 && outsidePointsCount == 2)
+		{
+			//Appearance info of triangle
+			outTri1.col = inTri.col;
+			outTri1.sym = inTri.sym;
+
+			// 1 valid inside point so use it
+			outTri1.p[0] = *insidePoints[0];
+
+			//But other 2 point lines intersect with the plane so use the intersect function
+			outTri1.p[1] = VectorIntersectPlane(plane_p, plane_n, *insidePoints[0], *outsidePoints[0]);
+			outTri1.p[2] = VectorIntersectPlane(plane_p, plane_n, *insidePoints[0], *outsidePoints[1]);
+
+			return 1;
+		}
+
+		if (insidePointsCount == 2 && outsidePointsCount == 1)    //A quadrilateral is cut into two triangles
+		{
+			outTri1.col = inTri.col;
+			outTri1.sym = inTri.sym;
+
+			outTri2.col = inTri.col;
+			outTri2.sym = inTri.sym;
+
+			outTri1.p[0] = *insidePoints[0];
+			outTri1.p[1] = *insidePoints[1];
+			outTri1.p[0] = VectorIntersectPlane(plane_p, plane_n, *insidePoints[0], *outsidePoints[0]);
+
+			outTri2.p[0] = *insidePoints[1];
+			outTri2.p[1] = outTri1.p[2];
+			outTri2.p[2] = VectorIntersectPlane(plane_p, plane_n, *insidePoints[1], *outsidePoints[1]);
+
+			return 2;
+		}
+	}
+
 	CHAR_INFO GetColour(float x)
 	{
 		short bg_col, fg_col;
@@ -302,7 +415,7 @@ public:
 
 	bool OnUserCreate() override
 	{
-		meshCube.LoadFromObjectFile("axis.obj");
+		meshCube.LoadFromObjectFile("ak-107.obj");
 
 		//Projection Matrix
 		matProj = MatrixMakeProjection(90.0f, (float)ScreenHeight() / (float)ScreenWidth(), 0.1f, 1000.0f);
@@ -431,32 +544,40 @@ public:
 				triViewed.p[1] = MultiplyMatrixVector(viewMatrix, triTransformed.p[1]);
 				triViewed.p[2] = MultiplyMatrixVector(viewMatrix, triTransformed.p[2]);
 
-				// Projecting Triangles 3D to 2D
-				triProjected.p[0] = MultiplyMatrixVector(matProj, triViewed.p[0]);
-				triProjected.p[1] = MultiplyMatrixVector(matProj, triViewed.p[1]);
-				triProjected.p[2] = MultiplyMatrixVector(matProj, triViewed.p[2]);
-				triProjected.col = triTransformed.col;
-				triProjected.sym = triTransformed.sym;
+				int clippedTriangles = 0;
+				triangle clipped[2];
+				clippedTriangles = TriangleClipAgainstPlane({ 0.0f,0.0f,0.1f }, { 0.0f, 0.0f, 1.0f }, triViewed, clipped[0], clipped[1]);
 
-				//Normalising 
-				triProjected.p[0] = VectorDiv(triProjected.p[0], triProjected.p[0].w);
-				triProjected.p[1] = VectorDiv(triProjected.p[1], triProjected.p[1].w);
-				triProjected.p[2] = VectorDiv(triProjected.p[2], triProjected.p[2].w);
+				for (int n = 0; n < clippedTriangles; n++)
+				{
 
-				//Offsets Verts into visible normalised space
-				vec3d vOffsetView = { 1,1,0 };
-				triProjected.p[0] = VectorAdd(triProjected.p[0], vOffsetView);
-				triProjected.p[1] = VectorAdd(triProjected.p[1], vOffsetView);
-				triProjected.p[2] = VectorAdd(triProjected.p[2], vOffsetView);
+					// Projecting Triangles 3D to 2D
+					triProjected.p[0] = MultiplyMatrixVector(matProj, clipped[n].p[0]);
+					triProjected.p[1] = MultiplyMatrixVector(matProj, clipped[n].p[1]);
+					triProjected.p[2] = MultiplyMatrixVector(matProj, clipped[n].p[2]);
+					triProjected.col = clipped[n].col;
+					triProjected.sym = clipped[n].sym;
 
-				triProjected.p[0].x *= 0.5f * (float)ScreenWidth();
-				triProjected.p[0].y *= 0.5f * (float)ScreenHeight();
-				triProjected.p[1].x *= 0.5f * (float)ScreenWidth();
-				triProjected.p[1].y *= 0.5f * (float)ScreenHeight();
-				triProjected.p[2].x *= 0.5f * (float)ScreenWidth();
-				triProjected.p[2].y *= 0.5f * (float)ScreenHeight();
+					//Normalising 
+					triProjected.p[0] = VectorDiv(triProjected.p[0], triProjected.p[0].w);
+					triProjected.p[1] = VectorDiv(triProjected.p[1], triProjected.p[1].w);
+					triProjected.p[2] = VectorDiv(triProjected.p[2], triProjected.p[2].w);
 
-				vecTrianglesToRaster.push_back(triProjected);
+					//Offsets Verts into visible normalised space
+					vec3d vOffsetView = { 1,1,0 };
+					triProjected.p[0] = VectorAdd(triProjected.p[0], vOffsetView);
+					triProjected.p[1] = VectorAdd(triProjected.p[1], vOffsetView);
+					triProjected.p[2] = VectorAdd(triProjected.p[2], vOffsetView);
+
+					triProjected.p[0].x *= 0.5f * (float)ScreenWidth();
+					triProjected.p[0].y *= 0.5f * (float)ScreenHeight();
+					triProjected.p[1].x *= 0.5f * (float)ScreenWidth();
+					triProjected.p[1].y *= 0.5f * (float)ScreenHeight();
+					triProjected.p[2].x *= 0.5f * (float)ScreenWidth();
+					triProjected.p[2].y *= 0.5f * (float)ScreenHeight();
+
+					vecTrianglesToRaster.push_back(triProjected);
+				}
 			}
 		}
 
@@ -471,12 +592,12 @@ public:
 		for (auto& triProjected : vecTrianglesToRaster)
 		{
 			//Draw Triangle
-			FillTriangle(triProjected.p[0].x, triProjected.p[0].y, triProjected.p[1].x,
-				triProjected.p[1].y, triProjected.p[2].x, triProjected.p[2].y, triProjected.sym, triProjected.col);
+			/* FillTriangle(triProjected.p[0].x, triProjected.p[0].y, triProjected.p[1].x,
+				triProjected.p[1].y, triProjected.p[2].x, triProjected.p[2].y, triProjected.sym, triProjected.col); */
 
 			//WireFrame
-			 /* DrawTriangle((int)triProjected.p[0].x, (int)triProjected.p[0].y, (int)triProjected.p[1].x,
-				(int)triProjected.p[1].y, (int)triProjected.p[2].x, (int)triProjected.p[2].y, PIXEL_SOLID, FG_WHITE); */
+			  DrawTriangle((int)triProjected.p[0].x, (int)triProjected.p[0].y, (int)triProjected.p[1].x,
+				(int)triProjected.p[1].y, (int)triProjected.p[2].x, (int)triProjected.p[2].y, PIXEL_SOLID, FG_WHITE); 
 		}
 
 		return true;
