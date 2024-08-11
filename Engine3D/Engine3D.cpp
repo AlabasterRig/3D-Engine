@@ -340,7 +340,7 @@ private:
 		if (insidePointsCount == 1 && outsidePointsCount == 2)
 		{
 			//Appearance info of triangle
-			outTri1.col = inTri.col;
+			outTri1.col = FG_BLUE;//inTri.col;
 			outTri1.sym = inTri.sym;
 
 			// 1 valid inside point so use it
@@ -355,10 +355,10 @@ private:
 
 		if (insidePointsCount == 2 && outsidePointsCount == 1)    //A quadrilateral is cut into two triangles
 		{
-			outTri1.col = inTri.col;
+			outTri1.col = FG_GREEN; //inTri.col;
 			outTri1.sym = inTri.sym;
 
-			outTri2.col = inTri.col;
+			outTri2.col = FG_RED; //inTri.col;
 			outTri2.sym = inTri.sym;
 
 			outTri1.p[0] = *insidePoints[0];
@@ -367,7 +367,7 @@ private:
 
 			outTri2.p[0] = *insidePoints[1];
 			outTri2.p[1] = outTri1.p[2];
-			outTri2.p[2] = VectorIntersectPlane(plane_p, plane_n, *insidePoints[1], *outsidePoints[1]);
+			outTri2.p[2] = VectorIntersectPlane(plane_p, plane_n, *insidePoints[1], *outsidePoints[0]);
 
 			return 2;
 		}
@@ -415,7 +415,7 @@ public:
 
 	bool OnUserCreate() override
 	{
-		meshCube.LoadFromObjectFile("ak-107.obj");
+		meshCube.LoadFromObjectFile("axis.obj");
 
 		//Projection Matrix
 		matProj = MatrixMakeProjection(90.0f, (float)ScreenHeight() / (float)ScreenWidth(), 0.1f, 1000.0f);
@@ -463,7 +463,7 @@ public:
 		}
 
 
-		Fill(0, 0, ScreenWidth(), ScreenHeight(), PIXEL_SOLID, FG_BLACK);
+		// Fill(0, 0, ScreenWidth(), ScreenHeight(), PIXEL_SOLID, FG_BLACK);
 
 		//Rotation Matrix Var
 		mat4x4 matRotZ, matRotX;
@@ -589,15 +589,61 @@ public:
 				return midPoint1 > midPoint2;
 			});
 
-		for (auto& triProjected : vecTrianglesToRaster)
-		{
-			//Draw Triangle
-			/* FillTriangle(triProjected.p[0].x, triProjected.p[0].y, triProjected.p[1].x,
-				triProjected.p[1].y, triProjected.p[2].x, triProjected.p[2].y, triProjected.sym, triProjected.col); */
+		Fill(0, 0, ScreenWidth(), ScreenHeight(), PIXEL_SOLID, FG_BLACK);
 
-			//WireFrame
-			  DrawTriangle((int)triProjected.p[0].x, (int)triProjected.p[0].y, (int)triProjected.p[1].x,
-				(int)triProjected.p[1].y, (int)triProjected.p[2].x, (int)triProjected.p[2].y, PIXEL_SOLID, FG_WHITE); 
+		for (auto& triToRaster : vecTrianglesToRaster)
+		{
+			// Clip Triangles against all 4 screen edges
+
+			triangle clipped[2];
+			list<triangle> listTriangle;
+			listTriangle.push_back(triToRaster);
+			int newTriangles = 1;
+
+			for (int p = 0; p < 4; p++)
+			{
+				int trisToAdd = 0;
+				while (newTriangles > 0)
+				{
+					triangle test = listTriangle.front();
+					listTriangle.pop_front();
+					newTriangles--;
+
+					switch (p)
+					{
+					case 0:	
+						trisToAdd = TriangleClipAgainstPlane({ 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, test, clipped[0], clipped[1]); 
+						break;
+
+					case 1:	
+						trisToAdd = TriangleClipAgainstPlane({ 0.0f, (float)ScreenHeight() - 1, 0.0f }, { 0.0f, -1.0f, 0.0f }, test, clipped[0], clipped[1]);
+						break;
+
+					case 2:	
+						trisToAdd = TriangleClipAgainstPlane({ 0.0f, 0.0f, 0.0f }, { 1.0f, 0.0f, 0.0f }, test, clipped[0], clipped[1]); 
+						break;
+
+					case 3:	
+						trisToAdd = TriangleClipAgainstPlane({ (float)ScreenWidth() - 1, 0.0f, 0.0f }, { -1.0f, 0.0f, 0.0f }, test, clipped[0], clipped[1]);
+						break;
+					}
+
+					for (int x = 0; x < trisToAdd; x++)
+					{
+						listTriangle.push_back(clipped[x]);
+					}
+				}
+				newTriangles = listTriangle.size();
+			}
+
+			for (auto& t : listTriangle)
+			{
+				// Fragment Shader
+				//FillTriangle(t.p[0].x, t.p[0].y, t.p[1].x, t.p[1].y, t.p[2].x, t.p[2].y, t.sym, t.col);
+
+				// WireFrame
+				DrawTriangle(t.p[0].x, t.p[0].y, t.p[1].x, t.p[1].y, t.p[2].x, t.p[2].y, PIXEL_SOLID, FG_BLACK);
+			}
 		}
 
 		return true;
