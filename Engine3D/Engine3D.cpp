@@ -164,6 +164,7 @@ private:
 		matrix.m[3][2] = (-fFar * fNear) / (fFar - fNear);
 		matrix.m[2][3] = 1.0f;
 		matrix.m[3][3] = 0.0f;
+
 		return matrix;
 	}
 
@@ -188,14 +189,14 @@ private:
 		newUp = VectorNormalise(newUp);
 
 		//Right Direction
-		vec3d Right = VectorCrossProduct(newUp, newForward);
+		vec3d newRight = VectorCrossProduct(newUp, newForward);
 
 		mat4x4 matrix;
 
-		matrix.m[0][0] = Right.x;  matrix.m[0][1] = Right.y;  matrix.m[0][2] = Right.z;  matrix.m[0][3] = 0.0f;
-		matrix.m[1][0] = newUp.x;  matrix.m[1][1] = newUp.y;  matrix.m[1][2] = newUp.z;  matrix.m[1][3] = 0.0f;
-		matrix.m[2][0] = newForward.x;  matrix.m[2][1] = newForward.y;  matrix.m[2][2] = newForward.z;  matrix.m[2][3] = 0.0f;
-		matrix.m[3][0] = pos.x;  matrix.m[3][1] = pos.y;  matrix.m[3][2] = pos.z;  matrix.m[3][3] = 1.0f;
+		matrix.m[0][0] = newRight.x;	matrix.m[0][1] = newRight.y;	matrix.m[0][2] = newRight.z;	matrix.m[0][3] = 0.0f;
+		matrix.m[1][0] = newUp.x;		matrix.m[1][1] = newUp.y;		matrix.m[1][2] = newUp.z;		matrix.m[1][3] = 0.0f;
+		matrix.m[2][0] = newForward.x;	matrix.m[2][1] = newForward.y;	matrix.m[2][2] = newForward.z;	matrix.m[2][3] = 0.0f;
+		matrix.m[3][0] = pos.x;			matrix.m[3][1] = pos.y;			matrix.m[3][2] = pos.z;			matrix.m[3][3] = 1.0f;
 
 		return matrix;
 	}
@@ -340,7 +341,7 @@ private:
 		if (insidePointsCount == 1 && outsidePointsCount == 2)
 		{
 			//Appearance info of triangle
-			outTri1.col = FG_BLUE;//inTri.col;
+			outTri1.col = inTri.col;
 			outTri1.sym = inTri.sym;
 
 			// 1 valid inside point so use it
@@ -355,15 +356,15 @@ private:
 
 		if (insidePointsCount == 2 && outsidePointsCount == 1)    //A quadrilateral is cut into two triangles
 		{
-			outTri1.col = FG_GREEN; //inTri.col;
+			outTri1.col = inTri.col;
 			outTri1.sym = inTri.sym;
 
-			outTri2.col = FG_RED; //inTri.col;
+			outTri2.col = inTri.col;
 			outTri2.sym = inTri.sym;
 
 			outTri1.p[0] = *insidePoints[0];
 			outTri1.p[1] = *insidePoints[1];
-			outTri1.p[0] = VectorIntersectPlane(plane_p, plane_n, *insidePoints[0], *outsidePoints[0]);
+			outTri1.p[2] = VectorIntersectPlane(plane_p, plane_n, *insidePoints[0], *outsidePoints[0]);
 
 			outTri2.p[0] = *insidePoints[1];
 			outTri2.p[1] = outTri1.p[2];
@@ -426,24 +427,21 @@ public:
 
 	bool OnUserUpdate(float fElapsedTime) override
 	{
-		if (GetKey(VK_UP).bHeld)
-		{
-			vCamera.y += 8.0f * fElapsedTime;
-		}
-		if (GetKey(VK_DOWN).bHeld)
-		{
-			vCamera.y -= 8.0f * fElapsedTime;
-		}
-		if (GetKey(VK_RIGHT).bHeld)
-		{
-			vCamera.x += 8.0f * fElapsedTime;
-		}
-		if (GetKey(VK_LEFT).bHeld)
-		{
-			vCamera.x -= 8.0f * fElapsedTime;
-		}
+		if(GetKey(VK_UP).bHeld)
+			vCamera.y += 8.0f * fElapsedTime;	// Travel Upwards
 
-		vec3d vForward = VectorMul(vLookDir, 4.0f * fElapsedTime);
+		if (GetKey(VK_DOWN).bHeld)
+			vCamera.y -= 8.0f * fElapsedTime;	// Travel Downwards
+
+
+		// Dont use these two in FPS mode, it is confusing :P
+		if (GetKey(VK_LEFT).bHeld)
+			vCamera.x -= 8.0f * fElapsedTime;	// Travel Along X-Axis
+
+		if (GetKey(VK_RIGHT).bHeld)
+			vCamera.x += 8.0f * fElapsedTime;   // Travel along X-Axis
+
+		vec3d vForward = VectorMul(vLookDir, 8.0f * fElapsedTime);
 
 		if (GetKey(L'W').bHeld)
 		{
@@ -475,7 +473,7 @@ public:
 		matRotX = MatrixMakeRotationX(fTheta);
 
 		mat4x4 matTrans;
-		matTrans = MatrixMakeTranslation(0.0f, 0.0f, 8.0f);  //Controls Distance to Camera on z axis
+		matTrans = MatrixMakeTranslation(0.0f, 0.0f, 5.0f);  //Controls Distance to Camera on z axis
 
 		//World Matrix for Translation
 		mat4x4 matWorld;
@@ -543,6 +541,8 @@ public:
 				triViewed.p[0] = MultiplyMatrixVector(viewMatrix, triTransformed.p[0]);
 				triViewed.p[1] = MultiplyMatrixVector(viewMatrix, triTransformed.p[1]);
 				triViewed.p[2] = MultiplyMatrixVector(viewMatrix, triTransformed.p[2]);
+				triViewed.col = triTransformed.col;
+				triViewed.sym = triTransformed.sym;
 
 				int clippedTriangles = 0;
 				triangle clipped[2];
@@ -562,6 +562,14 @@ public:
 					triProjected.p[0] = VectorDiv(triProjected.p[0], triProjected.p[0].w);
 					triProjected.p[1] = VectorDiv(triProjected.p[1], triProjected.p[1].w);
 					triProjected.p[2] = VectorDiv(triProjected.p[2], triProjected.p[2].w);
+
+					// X/Y are inverted so put them back
+					triProjected.p[0].x *= -1.0f;
+					triProjected.p[1].x *= -1.0f;
+					triProjected.p[2].x *= -1.0f;
+					triProjected.p[0].y *= -1.0f;
+					triProjected.p[1].y *= -1.0f;
+					triProjected.p[2].y *= -1.0f;
 
 					//Offsets Verts into visible normalised space
 					vec3d vOffsetView = { 1,1,0 };
@@ -642,7 +650,7 @@ public:
 				FillTriangle(t.p[0].x, t.p[0].y, t.p[1].x, t.p[1].y, t.p[2].x, t.p[2].y, t.sym, t.col);
 
 				// WireFrame
-				DrawTriangle(t.p[0].x, t.p[0].y, t.p[1].x, t.p[1].y, t.p[2].x, t.p[2].y, PIXEL_SOLID, FG_BLACK);
+				//DrawTriangle(t.p[0].x, t.p[0].y, t.p[1].x, t.p[1].y, t.p[2].x, t.p[2].y, PIXEL_SOLID, FG_BLACK);
 			}
 		}
 
