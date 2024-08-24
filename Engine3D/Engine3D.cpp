@@ -316,7 +316,7 @@ private:
 		}
 
 		//Point 3
-		if (d2 > 0)
+		if (d2 >= 0)
 		{
 			insidePoints[insidePointsCount++] = &inTri.p[2];
 		}
@@ -416,7 +416,7 @@ public:
 
 	bool OnUserCreate() override
 	{
-		meshCube.LoadFromObjectFile("axis.obj");
+		meshCube.LoadFromObjectFile("ak-107.obj");
 
 		//Projection Matrix
 		matProj = MatrixMakeProjection(90.0f, (float)ScreenHeight() / (float)ScreenWidth(), 0.1f, 1000.0f);
