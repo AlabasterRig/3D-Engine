@@ -4,9 +4,11 @@ This project is a simple 3D demo game engine developed in C++. It demonstrates b
 
 ## Features
 
-- Rendering of 3D models in OBJ format.
-- Basic transformations (rotation and translation).
-- Camera controls using arrow keys.
+- Rendering of 3D models in OBJ format
+- Basic transformations (rotation and translation)
+- Camera controls using arrow keys
+- Vector and matrix math implementation
+- Console-based rendering
 
 ## Getting Started
 
@@ -18,12 +20,56 @@ This project is a simple 3D demo game engine developed in C++. It demonstrates b
 ### Installation
 
 1. Clone the repository:
-   ```bash
-   git clone https://github.com/yourusername/3d-demo-game-engine.git
-   cd 3d-demo-game-engine
-
-2. Ensure that the `olcConsoleGameEngine.h` file is included in your project directory.
-3. Place your OBJ file in the project directory.
+    
+    bash
+    
+    ```bash
+    git clone https://github.com/AlabasterRig/3D-Engine.git
+    cd 3D-Engine
+    ```
+    
+2. Install dependencies:
+    - Download the `olcConsoleGameEngine.h` file from [OneLoneCoder's repository](https://github.com/OneLoneCoder/olcPixelGameEngine)
+    - Place it in the `include` directory of your project
+3. Add your 3D models:
+    - Place your OBJ files in the `models` directory
+    - The engine can load standard OBJ files with vertex and face data
+4. Build the project:
+    
+    bash
+    
+    ```bash
+    # For Linux/macOS with g++
+    g++ -o 3DEngine main.cpp -std=c++17
+    
+    # For Windows with Visual Studio
+    # Open the solution file and build using Visual Studio interface
+    ```
+    
+5. Run the application:
+    
+    bash
+    
+    ```bash
+    # Linux/macOS
+    ./3DEngine
+    
+    # Windows
+    3DEngine.exe
+    ```
+    
 
 ### Usage
-This engine can be used as a base for developing 3D applications and games. Can extend it by adding more features such as lighting, textures, and advanced physics.
+
+This engine can be used as a base for developing 3D applications and games. You can extend it by adding more features such as lighting and advanced physics.
+
+#### Controls
+
+- Arrow keys: Move camera
+- W/A/S/D: Move through the scene
+- Q/E: Rotate object
+- Space: Reset view
+
+## Acknowledgments
+
+- [OneLoneCoder](https://github.com/OneLoneCoder) for the Console Game Engine
